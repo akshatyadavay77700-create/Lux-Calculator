@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0c0a1f">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Luxury Calculator</title>
+
+    <!-- PWA Features Added -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(135deg, #0c0a1f, #1a1630, #0f0c29);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Helvetica Neue', sans-serif;
+            overflow: hidden;
+        }
+        .calculator {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(20, 15, 40, 0.6);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            box-sizing: border-box;
+        }
+        .display {
+            flex: 1.2;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 25px;
+            margin-bottom: 20px;
+            padding: 20px 30px;
+            text-align: right;
+            font-size: 4em;
+            font-weight: 300;
+            color: #ffffff;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            box-shadow: inset 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            word-break: break-all;
+            line-height: 1.2;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            flex-grow: 1;
+        }
+        .scientific .buttons {
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+        button {
+            border-radius: 20px;
+            border: none;
+            font-size: 1.6em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
+        button:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
+        button:active { transform: scale(0.95); }
+
+        .num { background: linear-gradient(145deg, #3a3470, #2a2350); }
+        .operator { background: linear-gradient(145deg, #888, #666); }
+        .clear { background: linear-gradient(145deg, #888, #666); }
+        .equal { background: linear-gradient(145deg, #888, #666); grid-row: span 2; border-radius: 30px; }
+        .sci-btn { background: linear-gradient(145deg, #555, #444); font-size: 1.2em; }
+
+        .premium .num { background: linear-gradient(145deg, #2a2350, #3a3070); }
+        .premium .operator { background: linear-gradient(145deg, #ff5e8f, #ff3b70); box-shadow: 0 0 25px rgba(255,90,140,0.6); }
+        .premium .clear { background: linear-gradient(145deg, #ff4757, #ff3838); box-shadow: 0 0 20px rgba(255,71,87,0.5); }
+        .premium .equal { background: linear-gradient(145deg, #00d2ff, #0099cc); box-shadow: 0 0 25px rgba(0,210,255,0.6); }
+        .premium .sci-btn { background: linear-gradient(145deg, #9d4edd, #7b2cbf); box-shadow: 0 0 20px rgba(157,78,221,0.5); }
+
+        .menu-btn, .style-toggle, .history-btn {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #4a00e0, #8e2de2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            box-shadow: 0 0 30px rgba(142,45,226,0.7);
+            z-index: 20;
+            transition: all 0.4s ease;
+        }
+        .menu-btn { top: 40px; left: 20px; }
+        .style-toggle { top: 40px; right: 80px; }
+        .history-btn { top: 40px; right: 20px; }
+        .menu-btn:active, .style-toggle:active, .history-btn:active { transform: scale(0.9); }
+
+        .side-menu, .history-panel {
+            position: absolute;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: rgba(20,15,50,0.8);
+            backdrop-filter: blur(20px);
+            padding: 100px 20px 20px;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+            z-index: 15;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+        .side-menu { left: -300px; }
+        .side-menu.open { left: 0; }
+        .history-panel { right: -300px; }
+        .history-panel.open { right: 0; }
+
+        .menu-item, .history-item {
+            padding: 18px 20px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            color: white;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .menu-item:hover, .history-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(10px);
+        }
+        .menu-item.active {
+            background: linear-gradient(145deg, #8e2de2, #4a00e0);
+            box-shadow: 0 0 20px rgba(142,45,226,0.6);
+        }
+        .history-item { font-size: 1.2em; text-align: right; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/button-09.mp3" preload="auto"></audio>
+
+    <div class="calculator" id="calc">
+        <div class="menu-btn" onclick="toggleMenu(); playSound()">≡</div>
+        <div class="style-toggle" onclick="togglePremiumStyle(); playSound()">✦</div>
+        <div class="history-btn" onclick="toggleHistory(); playSound()">⟳</div>
+
+        <div class="side-menu" id="sideMenu">
+            <div class="menu-item active" onclick="switchCalculator('basic'); playSound()">Basic Calculator</div>
+            <div class="menu-item" onclick="switchCalculator('scientific'); playSound()">Scientific Calculator</div>
+            <div class="menu-item" onclick="alert('Coming Soon!'); playSound()">Programmer Calculator</div>
+            <div class="menu-item" onclick="alert('Coming Soon!'); playSound()">Unit Converter</div>
+        </div>
+
+        <div class="history-panel" id="historyPanel">
+            <div style="font-size:1.5em; padding:10px 20px; color:#aaa;">History</div>
+            <div id="historyList"></div>
+        </div>
+
+        <div class="display" id="display">0</div>
+
+        <div class="buttons" id="buttons">
+            <button class="clear" onclick="clearDisplay(); playSound()">C</button>
+            <button class="sci-btn" onclick="append('('); playSound()">(</button>
+            <button class="sci-btn" onclick="append(')'); playSound()">)</button>
+            <button class="operator" onclick="append('/'); playSound()">÷</button>
+
+            <button class="num" onclick="append('7'); playSound()">7</button>
+            <button class="num" onclick="append('8'); playSound()">8</button>
+            <button class="num" onclick="append('9'); playSound()">9</button>
+            <button class="operator" onclick="append('*'); playSound()">×</button>
+
+            <button class="num" onclick="append('4'); playSound()">4</button>
+            <button class="num" onclick="append('5'); playSound()">5</button>
+            <button class="num" onclick="append('6'); playSound()">6</button>
+            <button class="operator" onclick="append('-'); playSound()">-</button>
+
+            <button class="num" onclick="append('1'); playSound()">1</button>
+            <button class="num" onclick="append('2'); playSound()">2</button>
+            <button class="num" onclick="append('3'); playSound()">3</button>
+            <button class="operator" onclick="append('+'); playSound()">+</button>
+
+            <button class="num" onclick="toggleSign(); playSound()">+/-</button>
+            <button class="num" onclick="append('0'); playSound()">0</button>
+            <button class="num" onclick="append('.'); playSound()">.</button>
+            <button class="equal" onclick="calculate(); playSound()">=</button>
+
+            <button class="sci-btn hidden" onclick="backspace(); playSound()">←</button>
+            <button class="sci-btn hidden" id="radDeg" onclick="toggleRad(); playSound()">Rad</button>
+            <button class="sci-btn hidden" onclick="append('Math.sqrt('); playSound()">√</button>
+            <button class="sci-btn hidden" onclick="append('%'); playSound()">%</button>
+            <button class="sci-btn hidden" onclick="append('Math.sin('); playSound()">sin</button>
+            <button class="sci-btn hidden" onclick="append('Math.cos('); playSound()">cos</button>
+            <button class="sci-btn hidden" onclick="append('Math.tan('); playSound()">tan</button>
+            <button class="sci-btn hidden" onclick="append('Math.log('); playSound()">ln</button>
+            <button class="sci-btn hidden" onclick="append('Math.log10('); playSound()">log</button>
+            <button class="sci-btn hidden" onclick="append('1/'); playSound()">1/x</button>
+            <button class="sci-btn hidden" onclick="append('Math.exp('); playSound()">e^x</button>
+            <button class="sci-btn hidden" onclick="append('**2'); playSound()">x²</button>
+            <button class="sci-btn hidden" onclick="append('**'); playSound()">x^y</button>
+            <button class="sci-btn hidden" onclick="append('Math.abs('); playSound()">|x|</button>
+            <button class="sci-btn hidden" onclick="append('Math.PI'); playSound()">π</button>
+            <button class="sci-btn hidden" onclick="append('Math.E'); playSound()">e</button>
+        </div>
+    </div>
+
+    <script>
+        const clickSound = document.getElementById('clickSound');
+        function playSound() {
+            clickSound.currentTime = 0;
+            clickSound.play().catch(() => {});
+        }
+
+        let display = document.getElementById('display');
+        let historyList = document.getElementById('historyList');
+        let history = [];
+        let isScientific = false;
+        let isRad = true;
+        let isPremium = false;
+
+        function append(val) {
+            if (display.innerText === '0' || display.innerText === 'Error') display.innerText = '';
+            display.innerText += val;
+        }
+        function clearDisplay() { display.innerText = '0'; }
+        function backspace() { display.innerText = display.innerText.slice(0, -1) || '0'; }
+        function toggleSign() {
+            if (display.innerText.startsWith('-')) display.innerText = display.innerText.slice(1);
+            else if (display.innerText !== '0') display.innerText = '-' + display.innerText;
+        }
+        function toggleRad() {
+            isRad = !isRad;
+            document.getElementById('radDeg').innerText = isRad ? 'Rad' : 'Deg';
+        }
+
+        function calculate() {
+            try {
+                let expr = display.innerText;
+                let originalExpr = expr;
+                if (!isRad) {
+                    expr = expr.replace(/Math.sin\(/g, 'Math.sin(Math.PI/180 * ');
+                    expr = expr.replace(/Math.cos\(/g, 'Math.cos(Math.PI/180 * ');
+                    expr = expr.replace(/Math.tan\(/g, 'Math.tan(Math.PI/180 * ');
+                }
+                let result = eval(expr);
+                display.innerText = result;
+                history.unshift({expr: originalExpr, result: result});
+                if (history.length > 20) history.pop();
+                updateHistory();
+            } catch { display.innerText = 'Error'; }
+        }
+
+        function updateHistory() {
+            historyList.innerHTML = '';
+            history.forEach(item => {
+                let div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `\( {item.expr} = <strong> \){item.result}</strong>`;
+                div.onclick = () => { display.innerText = item.result; playSound(); };
+                historyList.appendChild(div);
+            });
+        }
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); }
+        function toggleHistory() { document.getElementById('historyPanel').classList.toggle('open'); }
+
+        function switchCalculator(type) {
+            const calc = document.getElementById('calc');
+            const sciButtons = document.querySelectorAll('.sci-btn.hidden');
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => item.classList.remove('active'));
+            if (type === 'basic') {
+                menuItems[0].classList.add('active');
+                isScientific = false;
+                calc.classList.remove('scientific');
+                sciButtons.forEach(btn => btn.classList.add('hidden'));
+            } else if (type === 'scientific') {
+                menuItems[1].classList.add('active');
+                isScientific = true;
+                calc.classList.add('scientific');
+                sciButtons.forEach(btn => btn.classList.remove('hidden'));
+            }
+            toggleMenu();
+        }
+
+        function togglePremiumStyle() {
+            isPremium = !isPremium;
+            const calc = document.getElementById('calc');
+            const btn = document.querySelector('.style-toggle');
+            if (isPremium) {
+                calc.classList.add('premium');
+                btn.innerHTML = '★';
+                btn.style.boxShadow = '0 0 40px rgba(0,255,255,0.8)';
+            } else {
+                calc.classList.remove('premium');
+                btn.innerHTML = '✦';
+                btn.style.boxShadow = '0 0 30px rgba(142,45,226,0.7)';
+            }
+        }
+
+        document.querySelectorAll('.menu-item')[0].classList.add('active');
+    </script>
+</body>
+</html>
